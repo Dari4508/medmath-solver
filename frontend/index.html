@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedMath Solver — Gauss para Farmacia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="js/tailwind-config.js"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+    <!-- Header -->
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-med-500 to-gauss-500 flex items-center justify-center font-bold text-lg" aria-hidden="true">
+                    G
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">MedMath Solver</h1>
+                    <p class="text-xs text-gray-400" data-i18n="tagline">Eliminación de Gauss · Farmacia Hospitalaria</p>
+                </div>
+            </div>
+            <nav class="flex gap-2 items-center" aria-label="Main">
+                <button id="nav-cases" onclick="showView('cases')" class="nav-btn active" data-i18n="nav.cases">Casos</button>
+                <button id="nav-free" onclick="showView('free')" class="nav-btn" data-i18n="nav.free">Modo Libre</button>
+                <button id="nav-history" onclick="showView('history')" class="nav-btn" data-i18n="nav.history">Historial</button>
+                <label class="sr-only" for="lang-select">Language</label>
+                <select id="lang-select" onchange="setLang(this.value)" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs" title="Idioma / Language">
+                    <option value="es">ES</option>
+                    <option value="en">EN</option>
+                </select>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Views -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- Cases View -->
+        <section id="view-cases" class="view">
+            <h2 class="text-xl font-semibold mb-4" data-i18n="cases.title">Casos Clínicos Precargados</h2>
+            <div id="cases-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- Free Mode View -->
+        <section id="view-free" class="view hidden">
+            <h2 class="text-xl font-semibold mb-4" data-i18n="free.title">Modo Libre — Ingresa tu Sistema</h2>
+            <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                <div class="flex items-center gap-4 mb-4">
+                    <label class="text-sm text-gray-400" for="free-size" data-i18n="free.dimensions">Dimensiones:</label>
+                    <select id="free-size" onchange="buildFreeForm()" class="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm">
+                        <option value="2">2×2</option>
+                        <option value="3">3×3</option>
+                        <option value="4">4×4</option>
+                        <option value="5">5×5</option>
+                        <option value="6">6×6</option>
+                    </select>
+                </div>
+                <div id="free-form" class="mb-4"></div>
+                <button onclick="solveFreeMode()" class="bg-med-600 hover:bg-med-700 text-white px-6 py-2 rounded-lg font-medium transition" data-i18n="free.solve">
+                    Resolver con Gauss
+                </button>
+            </div>
+        </section>
+
+        <!-- History View -->
+        <section id="view-history" class="view hidden">
+            <h2 class="text-xl font-semibold mb-4" data-i18n="history.title">Historial de Cálculos</h2>
+            <div id="history-list" class="space-y-3"></div>
+        </section>
+
+        <!-- Solver View (shared) -->
+        <section id="view-solver" class="view hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Matrix Visualizer -->
+                <div class="lg:col-span-2">
+                    <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 id="solver-title" class="text-lg font-semibold"></h3>
+                            <div class="flex gap-2">
+                                <button id="btn-play" onclick="playAnimation()" class="ctrl-btn" data-i18n-title="solver.play" title="Play" aria-label="Play">▶</button>
+                                <button id="btn-pause" onclick="pauseAnimation()" class="ctrl-btn" data-i18n-title="solver.pause" title="Pause" aria-label="Pause">⏸</button>
+                                <button id="btn-step" onclick="stepForward()" class="ctrl-btn" data-i18n-title="solver.step" title="Step" aria-label="Step">⏭</button>
+                                <button id="btn-reset" onclick="resetAnimation()" class="ctrl-btn" data-i18n-title="solver.reset" title="Reset" aria-label="Reset">⟲</button>
+                                <label class="sr-only" for="speed-select">Speed</label>
+                                <select id="speed-select" onchange="setSpeed()" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs">
+                                    <option value="2000">0.5×</option>
+                                    <option value="1000" selected>1×</option>
+                                    <option value="500">2×</option>
+                                    <option value="250">4×</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Step description -->
+                        <div id="step-desc" class="bg-gray-800 rounded-lg px-4 py-3 mb-4 text-sm font-mono min-h-[48px] flex items-center">
+                            <span class="text-gray-400" data-i18n="solver.stepDesc">Presiona Play o Step para iniciar la animación</span>
+                        </div>
+
+                        <!-- Matrix canvas -->
+                        <div id="matrix-container" class="flex justify-center">
+                            <canvas id="matrix-canvas" role="img" aria-label="Matrix visualization"></canvas>
+                        </div>
+
+                        <!-- Step counter -->
+                        <div class="flex items-center justify-between mt-4 text-xs text-gray-500">
+                            <span id="step-counter">Paso 0 / 0</span>
+                            <label class="sr-only" for="step-slider">Step</label>
+                            <input id="step-slider" type="range" min="0" max="0" value="0" onchange="goToStep(this.value)" class="w-1/2 accent-med-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar: Info + Verification -->
+                <div class="space-y-4">
+                    <!-- Verification Panel -->
+                    <div id="verification-panel" class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+                        <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3" data-i18n="solver.verification">Verificación</h4>
+                        <div id="verification-status" class="text-center py-4" role="status">
+                            <span class="text-gray-500 text-sm" data-i18n="solver.waiting">Esperando resultado...</span>
+                        </div>
+                    </div>
+
+                    <!-- Solution -->
+                    <div id="solution-panel" class="bg-gray-900 rounded-xl p-5 border border-gray-800 hidden">
+                        <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3" data-i18n="solver.solution">Solución</h4>
+                        <div id="solution-values" class="space-y-2"></div>
+                    </div>
+
+                    <!-- Case Info -->
+                    <div id="case-info-panel" class="bg-gray-900 rounded-xl p-5 border border-gray-800 hidden">
+                        <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3" data-i18n="solver.caseInfo">Info del Caso</h4>
+                        <div id="case-info-content" class="text-sm space-y-2"></div>
+                    </div>
+
+                    <!-- Back button -->
+                    <button onclick="showView('cases')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-sm transition" data-i18n="solver.back">
+                        ← Volver a casos
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite" class="fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/gauss-visualizer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

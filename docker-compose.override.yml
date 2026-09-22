@@ -1,0 +1,8 @@
+# Copy to docker-compose.override.yml for local dev tweaks.
+# Usage: docker compose up --build
+services:
+  api:
+    volumes:
+      # Dev hot-reload: mount source and override CMD
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

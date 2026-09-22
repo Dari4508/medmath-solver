@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: ruff check app tests alembic locustfile.py
+      - name: Format check (black)
+        run: black --check app tests alembic locustfile.py
+      - name: Type check (mypy)
+        run: mypy app
+      - name: Tests with coverage
+        run: pytest --cov=app --cov-fail-under=100
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax check JS
+        run: |
+          for f in js/*.js; do node --check "$f"; done
+      - name: HTML sanity
+        run: python3 -c "import pathlib; html=pathlib.Path('index.html').read_text(); assert '</html>' in html"
