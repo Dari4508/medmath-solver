@@ -181,12 +181,17 @@
 
         <!-- Solver View (shared) -->
         <section id="view-solver" class="view hidden" aria-labelledby="solver-title">
+            <div class="mb-4">
+                <button type="button" id="back-btn-top" onclick="showView('cases')" class="back-btn back-btn-top nav-btn" data-i18n="solver.back">
+                    ← Volver a casos
+                </button>
+            </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Matrix Visualizer -->
                 <div class="lg:col-span-2">
                     <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 id="solver-title" class="text-lg font-semibold"></h3>
+                        <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                            <h3 id="solver-title" class="text-lg font-semibold min-w-0"></h3>
                             <div class="flex gap-2">
                                 <button id="btn-play" onclick="playAnimation()" class="ctrl-btn" data-i18n-title="solver.play" title="Play" aria-label="Play">▶</button>
                                 <button id="btn-pause" onclick="pauseAnimation()" class="ctrl-btn" data-i18n-title="solver.pause" title="Pause" aria-label="Pause">⏸</button>
@@ -243,8 +248,8 @@
                         <div id="case-info-content" class="text-sm space-y-2"></div>
                     </div>
 
-                    <!-- Back button -->
-                    <button onclick="showView('cases')" class="back-btn w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-sm" data-i18n="solver.back">
+                    <!-- Back button (bottom, end of flow) -->
+                    <button type="button" id="back-btn-bottom" onclick="showView('cases')" class="back-btn w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-sm" data-i18n="solver.back">
                         ← Volver a casos
                     </button>
                 </div>
