@@ -54,7 +54,8 @@
             </div>
             <nav class="flex gap-2 items-center flex-wrap justify-end" aria-label="Main">
                 <span id="rate-badge" class="hidden text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700 tabular-nums" role="status" aria-live="polite" aria-label="Rate limit"></span>
-                <button id="nav-cases" onclick="showView('cases')" class="nav-btn active" data-i18n="nav.cases">Casos</button>
+                <button id="nav-home" onclick="showView('home')" class="nav-btn active" data-i18n="nav.home">Inicio</button>
+                <button id="nav-cases" onclick="showView('cases')" class="nav-btn" data-i18n="nav.cases">Casos</button>
                 <button id="nav-free" onclick="showView('free')" class="nav-btn" data-i18n="nav.free">Modo Libre</button>
                 <button id="nav-history" onclick="showView('history')" class="nav-btn" data-i18n="nav.history">Historial</button>
                 <label class="sr-only" for="lang-select">Language</label>
@@ -69,8 +70,64 @@
     <!-- Views -->
     <main id="main-content" tabindex="-1" class="max-w-7xl mx-auto px-4 py-6">
 
+        <!-- Home View -->
+        <section id="view-home" class="view" aria-labelledby="home-heading">
+            <div class="home-hero mb-6">
+                <h2 id="home-heading" class="text-2xl sm:text-3xl font-bold tracking-tight mb-3" data-i18n="home.title">MedMath Solver</h2>
+                <p class="text-gray-300 text-base sm:text-lg leading-relaxed max-w-3xl mb-5" data-i18n="home.subtitle">Resuelve sistemas de ecuaciones lineales con eliminación de Gauss, aplicado a farmacia hospitalaria — cada cálculo se verifica contra una fuente clínica real.</p>
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" onclick="showView('cases')" class="home-cta home-cta-primary" data-i18n="home.ctaCases">Ver Casos Clínicos</button>
+                    <button type="button" onclick="showView('free')" class="home-cta home-cta-secondary" data-i18n="home.ctaFree">Probar Modo Libre</button>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3" data-i18n="home.whatTitle">Qué es</h3>
+                <div class="home-grid">
+                    <article class="home-card">
+                        <div class="home-card-icon" aria-hidden="true">💧</div>
+                        <h4 class="home-card-title" data-i18n="home.what1Title">Casos clínicos reales</h4>
+                        <p class="home-card-text" data-i18n="home.what1Text">Mezclas IV, electrolitos y nutrición parenteral, verificados contra protocolos y guías publicadas.</p>
+                    </article>
+                    <article class="home-card">
+                        <div class="home-card-icon" aria-hidden="true">✏️</div>
+                        <h4 class="home-card-title" data-i18n="home.what2Title">Modo Libre</h4>
+                        <p class="home-card-text" data-i18n="home.what2Text">Arma tu propio sistema de ecuaciones (hasta 6×6) y resuélvelo paso a paso con animación.</p>
+                    </article>
+                    <article class="home-card">
+                        <div class="home-card-icon" aria-hidden="true">✅</div>
+                        <h4 class="home-card-title" data-i18n="home.what3Title">Verificación matemática</h4>
+                        <p class="home-card-text" data-i18n="home.what3Text">Cada resultado se compara contra el valor esperado, con margen de error visible.</p>
+                    </article>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3" data-i18n="home.howTitle">Cómo usar Modo Libre</h3>
+                <ol class="home-steps">
+                    <li class="home-step">
+                        <span class="home-step-num" aria-hidden="true">1</span>
+                        <span data-i18n="home.step1">Elige la dimensión de tu sistema (2×2 hasta 6×6).</span>
+                    </li>
+                    <li class="home-step">
+                        <span class="home-step-num" aria-hidden="true">2</span>
+                        <span data-i18n="home.step2">Carga un ejemplo o escribe tu propia matriz y vector — puedes documentar el contexto clínico (qué representa cada variable).</span>
+                    </li>
+                    <li class="home-step">
+                        <span class="home-step-num" aria-hidden="true">3</span>
+                        <span data-i18n="home.step3">Resuelve y revisa la animación paso a paso: pivoteo, eliminación, sustitución hacia atrás.</span>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="home-about">
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2" data-i18n="home.aboutTitle">Sobre el proyecto</h3>
+                <p class="text-sm text-gray-400 leading-relaxed" data-i18n="home.aboutText">Desarrollado por Jeffrey Rodríguez, estudiante de Ingeniería de Sistemas (Corporación Universitaria Americana) como proyecto académico de álgebra lineal aplicada.</p>
+            </div>
+        </section>
+
         <!-- Cases View -->
-        <section id="view-cases" class="view" aria-labelledby="cases-heading">
+        <section id="view-cases" class="view hidden" aria-labelledby="cases-heading">
             <h2 id="cases-heading" class="text-xl font-semibold mb-4" data-i18n="cases.title">Casos Clínicos Precargados</h2>
             <div id="cases-grid" class="cases-grid" aria-busy="true"></div>
         </section>

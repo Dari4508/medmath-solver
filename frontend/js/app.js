@@ -1,6 +1,6 @@
 let viz;
 let freeViz;
-let currentView = 'cases';
+let currentView = 'home';
 let currentCase = null;
 let calculationResult = null;
 let freeResult = null;
@@ -8,11 +8,29 @@ let freeCalc = null;
 
 const DICT = {
     es: {
+        'nav.home': 'Inicio',
         'nav.cases': 'Casos',
         'nav.free': 'Modo Libre',
         'nav.history': 'Historial',
         'tagline': 'Eliminación de Gauss · Farmacia Hospitalaria',
         'a11y.skip': 'Saltar al contenido principal',
+        'home.title': 'MedMath Solver',
+        'home.subtitle': 'Resuelve sistemas de ecuaciones lineales con eliminación de Gauss, aplicado a farmacia hospitalaria — cada cálculo se verifica contra una fuente clínica real.',
+        'home.ctaCases': 'Ver Casos Clínicos',
+        'home.ctaFree': 'Probar Modo Libre',
+        'home.whatTitle': 'Qué es',
+        'home.what1Title': 'Casos clínicos reales',
+        'home.what1Text': 'Mezclas IV, electrolitos y nutrición parenteral, verificados contra protocolos y guías publicadas.',
+        'home.what2Title': 'Modo Libre',
+        'home.what2Text': 'Arma tu propio sistema de ecuaciones (hasta 6×6) y resuélvelo paso a paso con animación.',
+        'home.what3Title': 'Verificación matemática',
+        'home.what3Text': 'Cada resultado se compara contra el valor esperado, con margen de error visible.',
+        'home.howTitle': 'Cómo usar Modo Libre',
+        'home.step1': 'Elige la dimensión de tu sistema (2×2 hasta 6×6).',
+        'home.step2': 'Carga un ejemplo o escribe tu propia matriz y vector — puedes documentar el contexto clínico (qué representa cada variable).',
+        'home.step3': 'Resuelve y revisa la animación paso a paso: pivoteo, eliminación, sustitución hacia atrás.',
+        'home.aboutTitle': 'Sobre el proyecto',
+        'home.aboutText': 'Desarrollado por Jeffrey Rodríguez, estudiante de Ingeniería de Sistemas (Corporación Universitaria Americana) como proyecto académico de álgebra lineal aplicada.',
         'cases.title': 'Casos Clínicos Precargados',
         'cases.source': 'Fuente',
         'cases.vars': 'vars',
@@ -81,11 +99,29 @@ const DICT = {
         'rate.cooldown': 'Rate limit — {s}s',
     },
     en: {
+        'nav.home': 'Home',
         'nav.cases': 'Cases',
         'nav.free': 'Free Mode',
         'nav.history': 'History',
         'tagline': 'Gaussian Elimination · Hospital Pharmacy',
         'a11y.skip': 'Skip to main content',
+        'home.title': 'MedMath Solver',
+        'home.subtitle': 'Solve systems of linear equations with Gaussian elimination, applied to hospital pharmacy — every calculation is verified against a real clinical source.',
+        'home.ctaCases': 'View Clinical Cases',
+        'home.ctaFree': 'Try Free Mode',
+        'home.whatTitle': 'What it is',
+        'home.what1Title': 'Real clinical cases',
+        'home.what1Text': 'IV mixtures, electrolytes, and parenteral nutrition, verified against published protocols and guidelines.',
+        'home.what2Title': 'Free Mode',
+        'home.what2Text': 'Build your own system of equations (up to 6×6) and solve it step by step with animation.',
+        'home.what3Title': 'Mathematical verification',
+        'home.what3Text': 'Every result is compared against the expected value, with a visible error margin.',
+        'home.howTitle': 'How to use Free Mode',
+        'home.step1': 'Choose your system dimension (2×2 up to 6×6).',
+        'home.step2': 'Load an example or type your own matrix and vector — you can document the clinical context (what each variable represents).',
+        'home.step3': 'Solve and review the step-by-step animation: pivoting, elimination, back-substitution.',
+        'home.aboutTitle': 'About the project',
+        'home.aboutText': 'Developed by Jeffrey Rodríguez, Systems Engineering student (Corporación Universitaria Americana) as an academic project on applied linear algebra.',
         'cases.title': 'Preloaded Clinical Cases',
         'cases.source': 'Source',
         'cases.vars': 'vars',

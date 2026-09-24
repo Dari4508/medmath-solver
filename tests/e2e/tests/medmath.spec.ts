@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('MedMath Solver E2E', () => {
-  test('loads and shows preloaded cases', async ({ page }) => {
+  test('loads home by default and shows preloaded cases', async ({ page }) => {
     await page.goto('/');
+    await expect(page.locator('#view-home')).toBeVisible();
+    await expect(page.locator('#nav-home')).toHaveClass(/active/);
+    await expect(page.locator('[data-i18n="home.title"]')).toHaveText('MedMath Solver');
+    await page.click('#nav-cases');
+    await expect(page.locator('#view-cases')).toBeVisible();
     await expect(page.locator('#cases-grid [role="button"]').first()).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: /D10W/ })).toBeVisible();
     await expect(page.locator('#cases-grid [role="button"]')).toHaveCount(5);
@@ -10,6 +15,7 @@ test.describe('MedMath Solver E2E', () => {
 
   test('solves D10W case and shows verified solution', async ({ page }) => {
     await page.goto('/');
+    await page.click('#nav-cases');
     await page.locator('#cases-grid [role="button"]', { hasText: 'D10W' }).click();
     await expect(page.locator('#view-solver')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('#verification-status')).toContainText(/Verificado|Verified/, {
@@ -74,6 +80,7 @@ test.describe('MedMath Solver E2E', () => {
 
   test('history view loads after calculation', async ({ page }) => {
     await page.goto('/');
+    await page.click('#nav-cases');
     await page.locator('#cases-grid [role="button"]', { hasText: 'D10W' }).click();
     await expect(page.locator('#view-solver')).toBeVisible({ timeout: 10000 });
     await page.click('#nav-history');
