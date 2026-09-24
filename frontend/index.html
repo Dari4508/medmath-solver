@@ -3,28 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedMath Solver — Gauss para Farmacia</title>
+    <title>MedMath Solver — Sistemas lineales con Gauss para farmacia</title>
+    <meta name="description" content="Resuelve sistemas lineales con eliminación de Gauss para preparaciones IV de farmacia hospitalaria: D10W, electrolitos, KCl y NPT con verificación numérica.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MedMath Solver — Gauss para farmacia hospitalaria">
+    <meta property="og:description" content="Calculadora de mezclas IV con eliminación de Gauss y casos clínicos verificados (D10W, electrolitos, KCl, NaHCO₃, NPT).">
+    <meta property="og:locale" content="es_ES">
+    <meta property="og:locale:alternate" content="en_US">
+    <link rel="alternate" hreflang="es" href="/?lang=es">
+    <link rel="alternate" hreflang="en" href="/?lang=en">
+    <link rel="alternate" hreflang="x-default" href="/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <link rel="stylesheet" href="assets/styles.css">
     <script src="js/tailwind-config.js"></script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MedMath Solver",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "Web",
+        "description": "Calculadora de sistemas lineales con eliminación de Gauss para farmacia hospitalaria y preparaciones intravenosas.",
+        "inLanguage": ["es", "en"],
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
 
+    <a href="#main-content" class="skip-link" data-i18n="a11y.skip">Saltar al contenido principal</a>
+
     <!-- Header -->
-    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <header class="site-header sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-med-500 to-gauss-500 flex items-center justify-center font-bold text-lg" aria-hidden="true">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-med-500 to-gauss-500 flex items-center justify-center font-bold text-lg shadow-lg shadow-med-500/20" aria-hidden="true">
                     G
                 </div>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight">MedMath Solver</h1>
-                    <p class="text-xs text-gray-400" data-i18n="tagline">Eliminación de Gauss · Farmacia Hospitalaria</p>
+                <div class="brand-mark">
+                    <h1 class="font-bold leading-tight" id="app-title">MedMath Solver</h1>
+                    <p class="tagline text-xs text-gray-400" data-i18n="tagline">Eliminación de Gauss · Farmacia Hospitalaria</p>
                 </div>
             </div>
-            <nav class="flex gap-2 items-center" aria-label="Main">
+            <nav class="flex gap-2 items-center flex-wrap justify-end" aria-label="Main">
+                <span id="rate-badge" class="hidden text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700 tabular-nums" role="status" aria-live="polite" aria-label="Rate limit"></span>
                 <button id="nav-cases" onclick="showView('cases')" class="nav-btn active" data-i18n="nav.cases">Casos</button>
                 <button id="nav-free" onclick="showView('free')" class="nav-btn" data-i18n="nav.free">Modo Libre</button>
                 <button id="nav-history" onclick="showView('history')" class="nav-btn" data-i18n="nav.history">Historial</button>
@@ -38,43 +67,117 @@
     </header>
 
     <!-- Views -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
+    <main id="main-content" tabindex="-1" class="max-w-7xl mx-auto px-4 py-6">
 
         <!-- Cases View -->
-        <section id="view-cases" class="view">
-            <h2 class="text-xl font-semibold mb-4" data-i18n="cases.title">Casos Clínicos Precargados</h2>
-            <div id="cases-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <section id="view-cases" class="view" aria-labelledby="cases-heading">
+            <h2 id="cases-heading" class="text-xl font-semibold mb-4" data-i18n="cases.title">Casos Clínicos Precargados</h2>
+            <div id="cases-grid" class="cases-grid" aria-busy="true"></div>
         </section>
 
         <!-- Free Mode View -->
-        <section id="view-free" class="view hidden">
-            <h2 class="text-xl font-semibold mb-4" data-i18n="free.title">Modo Libre — Ingresa tu Sistema</h2>
-            <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <div class="flex items-center gap-4 mb-4">
+        <section id="view-free" class="view hidden" aria-labelledby="free-heading">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 id="free-heading" class="text-xl font-semibold" data-i18n="free.title">Modo Libre — Ingresa tu Sistema</h2>
+                <div class="flex flex-wrap items-center gap-3">
                     <label class="text-sm text-gray-400" for="free-size" data-i18n="free.dimensions">Dimensiones:</label>
-                    <select id="free-size" onchange="buildFreeForm()" class="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm">
+                    <select id="free-size" onchange="onFreeSizeChange()" class="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm" aria-describedby="free-example-hint">
                         <option value="2">2×2</option>
                         <option value="3">3×3</option>
                         <option value="4">4×4</option>
                         <option value="5">5×5</option>
                         <option value="6">6×6</option>
                     </select>
+                    <button type="button" id="free-example-btn" onclick="loadExample()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-1.5 rounded-lg text-sm transition border border-gray-700" data-i18n="free.example">
+                        Cargar ejemplo
+                    </button>
                 </div>
-                <div id="free-form" class="mb-4"></div>
-                <button onclick="solveFreeMode()" class="bg-med-600 hover:bg-med-700 text-white px-6 py-2 rounded-lg font-medium transition" data-i18n="free.solve">
-                    Resolver con Gauss
-                </button>
+            </div>
+            <p id="free-example-hint" class="sr-only" data-i18n="free.exampleHint">Carga un sistema de ejemplo según la dimensión seleccionada</p>
+
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                <!-- Left: input form -->
+                <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <!-- Clinical context panel (shown when example loaded) -->
+                    <div id="free-context-panel" class="hidden bg-yellow-900/20 border border-yellow-800/30 rounded-lg p-3 mb-4">
+                        <div class="text-xs font-semibold text-yellow-300 uppercase tracking-wide mb-1" data-i18n="free.context.title">Contexto clínico</div>
+                        <div id="free-context-text" class="text-sm text-yellow-200/90 mb-2"></div>
+                        <div id="free-context-vars" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <!-- Editable placeholder for manual mode -->
+                    <div id="free-context-edit" class="bg-gray-800/50 border border-gray-700 rounded-lg p-3 mb-4">
+                        <label for="free-context-input" class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 block" data-i18n="free.context.optional">Contexto clínico (opcional)</label>
+                        <input type="text" id="free-context-input" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-sm text-gray-200 mb-1.5" placeholder="Describe el objetivo: ej. Preparar 500mL de NaCl 0.45%..." data-i18n-placeholder="free.context.placeholder" aria-label="Contexto clínico del sistema">
+                        <label for="free-vars-input" class="sr-only" data-i18n="free.context.varsLabel">Nombres de variables</label>
+                        <input type="text" id="free-vars-input" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-sm text-gray-200 font-mono" placeholder="Variables separadas por coma: ml_NS_09, ml_agua" data-i18n-placeholder="free.context.varsPlaceholder" aria-label="Nombres de variables separados por coma">
+                    </div>
+                    <div id="free-form" class="mb-4" role="group" aria-labelledby="free-heading"></div>
+                    <div id="free-error" role="alert" aria-live="assertive" class="hidden text-red-400 text-sm mt-2 mb-2"></div>
+                    <button type="button" id="free-solve-btn" onclick="solveFreeMode()" class="bg-med-600 hover:bg-med-700 text-white px-6 py-2 rounded-lg font-medium transition" data-i18n="free.solve">
+                        Resolver con Gauss
+                    </button>
+                </div>
+
+                <!-- Right: Gauss animation + results (inline, no view switch) -->
+                <div id="free-result-wrap" class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <div id="free-placeholder" class="text-center py-10 text-gray-500 text-sm" data-i18n="free.noResult">
+                        Los resultados y la animación de Gauss aparecerán aquí
+                    </div>
+                    <div id="free-result-panel" class="hidden">
+                        <div id="free-result-context" class="hidden bg-yellow-900/20 border border-yellow-800/30 rounded-lg px-3 py-2 mb-4 text-sm text-yellow-200/90">
+                            <span id="free-result-context-text"></span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
+                            <div class="flex items-center gap-2">
+                                <span id="free-badge" class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700" role="status"></span>
+                                <span id="free-error-margin" class="text-xs text-gray-500 font-mono"></span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="free-btn-play" onclick="freePlay()" class="ctrl-btn" data-i18n-title="solver.play" title="Play" aria-label="Play">▶</button>
+                                <button id="free-btn-pause" onclick="freePause()" class="ctrl-btn" data-i18n-title="solver.pause" title="Pause" aria-label="Pause">⏸</button>
+                                <button id="free-btn-step" onclick="freeStepForward()" class="ctrl-btn" data-i18n-title="solver.step" title="Step" aria-label="Step">⏭</button>
+                                <button id="free-btn-reset" onclick="freeReset()" class="ctrl-btn" data-i18n-title="solver.reset" title="Reset" aria-label="Reset">⟲</button>
+                                <label class="sr-only" for="free-speed-select">Speed</label>
+                                <select id="free-speed-select" onchange="freeSetSpeed()" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs">
+                                    <option value="2000">0.5×</option>
+                                    <option value="1000" selected>1×</option>
+                                    <option value="500">2×</option>
+                                    <option value="250">4×</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="free-step-desc" class="bg-gray-800 rounded-lg px-4 py-3 mb-4 text-sm font-mono min-h-[48px] flex items-center" aria-live="polite">
+                            <span class="text-gray-400" data-i18n="solver.stepDesc">Presiona Play o Step para iniciar la animación</span>
+                        </div>
+
+                        <div class="flex justify-center">
+                            <canvas id="free-matrix-canvas" role="img" aria-label="Matrix visualization free mode"></canvas>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4 text-xs text-gray-500">
+                            <span id="free-step-counter">Paso 0 / 0</span>
+                            <label class="sr-only" for="free-step-slider">Step</label>
+                            <input id="free-step-slider" type="range" min="0" max="0" value="0" onchange="freeGoToStep(this.value)" class="w-1/2 accent-med-500">
+                        </div>
+
+                        <div id="free-solution-panel" class="mt-4 hidden">
+                            <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3" data-i18n="solver.solution">Solución</h4>
+                            <div id="free-solution-values" class="space-y-2"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
         <!-- History View -->
-        <section id="view-history" class="view hidden">
-            <h2 class="text-xl font-semibold mb-4" data-i18n="history.title">Historial de Cálculos</h2>
+        <section id="view-history" class="view hidden" aria-labelledby="history-heading">
+            <h2 id="history-heading" class="text-xl font-semibold mb-4" data-i18n="history.title">Historial de Cálculos</h2>
             <div id="history-list" class="space-y-3"></div>
         </section>
 
         <!-- Solver View (shared) -->
-        <section id="view-solver" class="view hidden">
+        <section id="view-solver" class="view hidden" aria-labelledby="solver-title">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Matrix Visualizer -->
                 <div class="lg:col-span-2">
@@ -97,7 +200,7 @@
                         </div>
 
                         <!-- Step description -->
-                        <div id="step-desc" class="bg-gray-800 rounded-lg px-4 py-3 mb-4 text-sm font-mono min-h-[48px] flex items-center">
+                        <div id="step-desc" class="bg-gray-800 rounded-lg px-4 py-3 mb-4 text-sm font-mono min-h-[48px] flex items-center" aria-live="polite">
                             <span class="text-gray-400" data-i18n="solver.stepDesc">Presiona Play o Step para iniciar la animación</span>
                         </div>
 
@@ -138,7 +241,7 @@
                     </div>
 
                     <!-- Back button -->
-                    <button onclick="showView('cases')" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-sm transition" data-i18n="solver.back">
+                    <button onclick="showView('cases')" class="back-btn w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-sm" data-i18n="solver.back">
                         ← Volver a casos
                     </button>
                 </div>

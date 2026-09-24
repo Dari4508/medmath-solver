@@ -23,17 +23,32 @@ class Handler(SimpleHTTPRequestHandler):
             req.add_header("Content-Type", content_type)
         try:
             with urlopen(req, timeout=30) as resp:
-                self._send_response(resp.status, resp.read(), resp.headers.get("Content-Type"))
+                self._send_response(
+                    resp.status, resp.read(), resp.headers.get("Content-Type"), resp.headers
+                )
         except HTTPError as e:
-            self._send_response(e.code, e.read(), e.headers.get("Content-Type"))
+            self._send_response(e.code, e.read(), e.headers.get("Content-Type"), e.headers)
         except URLError:
             msg = f'{{"detail":"API no responde en {API_UPSTREAM} — arranca uvicorn en :8000"}}'.encode()
             self._send_response(502, msg, "application/json")
 
-    def _send_response(self, status, data, content_type):
+    _FORWARDED_HEADERS = (
+        "Retry-After",
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining",
+        "X-RateLimit-Reset",
+        "X-Request-ID",
+    )
+
+    def _send_response(self, status, data, content_type, headers=None):
         self.send_response(status)
         self.send_header("Content-Type", content_type or "application/json")
         self.send_header("Content-Length", str(len(data)))
+        if headers is not None:
+            for name in self._FORWARDED_HEADERS:
+                value = headers.get(name)
+                if value:
+                    self.send_header(name, value)
         self.end_headers()
         self.wfile.write(data)
 

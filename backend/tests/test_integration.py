@@ -58,7 +58,36 @@ async def test_case_electrolytes_flow():
 
         assert result["success"] is True
         assert result["verified"] is True
-        assert result["error_margin"] < 0.01
+        assert result["error_margin"] < 1e-6
+        assert result["matches_expected"] is True
+        assert abs(result["solution"][0] - 500.0) < 0.01
+        assert abs(result["solution"][1] - 200.0) < 0.01
+        assert abs(result["solution"][2] - 300.0) < 0.01
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "marker",
+    ["KCl 20/40", "NaHCO₃ 8.4%/4.2%", "AA10% + G50%"],
+)
+async def test_extra_medical_cases_verified(marker: str):
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.get("/api/cases")
+        assert resp.status_code == 200
+        cases = resp.json()
+
+        case = next(c for c in cases if marker in c["name"])
+        resp = await ac.post("/api/calculate", json={"case_id": case["id"]})
+        assert resp.status_code == 200
+        result = resp.json()
+
+        assert result["success"] is True
+        assert result["verified"] is True
+        assert result["error_margin"] is not None
+        assert result["error_margin"] < 1e-6
+        assert result["matches_expected"] is True
+        assert case["reference_url"]
+        assert case["reference_source"]
 
 
 @pytest.mark.asyncio
@@ -103,7 +132,30 @@ async def test_health_check():
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/api/health")
         assert resp.status_code == 200
-        assert resp.json()["status"] == "ok"
+        body = resp.json()
+        assert body["status"] == "ok"
+        assert body["schema_ok"] is True
+        assert body["missing"] == {}
+
+
+@pytest.mark.asyncio
+async def test_check_schema_flags_missing_table(monkeypatch):
+    from app import database
+
+    monkeypatch.setitem(database.REQUIRED_COLUMNS, "no_such_table", ["x"])
+    result = database.check_schema()
+    assert result["schema_ok"] is False
+    assert result["missing"]["no_such_table"] == ["x"]
+
+
+@pytest.mark.asyncio
+async def test_check_schema_flags_missing_column(monkeypatch):
+    from app import database
+
+    monkeypatch.setitem(database.REQUIRED_COLUMNS, "medical_cases", ["no_such_column"])
+    result = database.check_schema()
+    assert result["schema_ok"] is False
+    assert result["missing"]["medical_cases"] == ["no_such_column"]
 
 
 @pytest.mark.asyncio
@@ -159,7 +211,9 @@ def test_seed_cases_idempotent():
 
         names = [c.name for c in db.query(MedicalCase).all()]
         assert len(names) == len(set(names))
-        assert len(names) >= 2
+        assert len(names) >= 5
+        urls = [c.reference_url for c in db.query(MedicalCase).all()]
+        assert sum(1 for u in urls if u and "example-hospital" not in u) >= 3
     finally:
         db.close()
 
@@ -176,7 +230,7 @@ async def test_lifespan_startup_runs():
 
     db = SessionLocal()
     try:
-        assert db.query(MedicalCase).count() >= 2
+        assert db.query(MedicalCase).count() >= 5
     finally:
         db.close()
 

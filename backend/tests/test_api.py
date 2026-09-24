@@ -168,6 +168,73 @@ async def test_update_case_with_matrix_vector_expected():
 
 
 @pytest.mark.asyncio
+async def test_update_case_matrix_vector_mismatch_422():
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        payload = dict(VALID_CASE, name="Caso Update Mismatch")
+        resp = await ac.post("/api/cases", json=payload)
+        assert resp.status_code == 201
+        case_id = resp.json()["id"]
+
+        resp = await ac.put(
+            f"/api/cases/{case_id}",
+            json={"matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
+        )
+        assert resp.status_code == 422
+
+        resp = await ac.get(f"/api/cases/{case_id}")
+        assert resp.status_code == 200
+        assert len(resp.json()["vector"]) == 2
+
+        await ac.delete(f"/api/cases/{case_id}")
+
+
+@pytest.mark.asyncio
+async def test_update_case_invalid_name_422():
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        payload = dict(VALID_CASE, name="Caso Update Bad Name")
+        resp = await ac.post("/api/cases", json=payload)
+        assert resp.status_code == 201
+        case_id = resp.json()["id"]
+
+        resp = await ac.put(
+            f"/api/cases/{case_id}",
+            json={"name": "<script>alert(1)</script>"},
+        )
+        assert resp.status_code == 422
+
+        await ac.delete(f"/api/cases/{case_id}")
+
+
+@pytest.mark.asyncio
+async def test_update_case_expected_length_mismatch_422():
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        payload = dict(VALID_CASE, name="Caso Update Bad Expected")
+        resp = await ac.post("/api/cases", json=payload)
+        assert resp.status_code == 201
+        case_id = resp.json()["id"]
+
+        resp = await ac.put(f"/api/cases/{case_id}", json={"expected": [1.0]})
+        assert resp.status_code == 422
+
+        resp = await ac.put(f"/api/cases/{case_id}", json={"variables": ["only"]})
+        assert resp.status_code == 422
+
+        resp = await ac.put(f"/api/cases/{case_id}", json={"units": ["only"]})
+        assert resp.status_code == 422
+
+        resp = await ac.put(f"/api/cases/{case_id}", json={"expected": [2e6, 1.0]})
+        assert resp.status_code == 422
+
+        resp = await ac.put(
+            f"/api/cases/{case_id}",
+            json={"matrix": [[1.0, 2.0, 3.0]], "vector": [1.0]},
+        )
+        assert resp.status_code == 422
+
+        await ac.delete(f"/api/cases/{case_id}")
+
+
+@pytest.mark.asyncio
 async def test_delete_case_ok_and_then_404():
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         payload = dict(VALID_CASE, name="Caso Para Borrar")
@@ -317,7 +384,7 @@ async def test_calculate_lang_en():
 
 
 @pytest.mark.asyncio
-async def test_calculate_lang_invalid_falls_back():
+async def test_calculate_lang_invalid_rejected_422():
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/api/cases")
         case_id = resp.json()[0]["id"]
@@ -328,6 +395,13 @@ async def test_calculate_lang_invalid_falls_back():
             params={"lang": "fr"},
         )
         assert resp.status_code == 422
+
+
+def test_t_falls_back_to_es_for_unknown_lang():
+    from app.i18n import t
+
+    assert t("case_not_found", "fr") == "Caso no encontrado"
+    assert t("case_not_found", "en") == "Case not found"
 
 
 @pytest.mark.asyncio

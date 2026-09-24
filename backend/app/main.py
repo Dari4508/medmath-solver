@@ -36,7 +36,7 @@ from .schemas import (
     HistoryStepsResponse,
     MatrixInput,
 )
-from .security import add_security_headers, limiter, sanitize_html
+from .security import add_security_headers, limiter
 
 structlog.configure(
     processors=[
@@ -78,6 +78,13 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[
+        "X-Request-ID",
+        "Retry-After",
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining",
+        "X-RateLimit-Reset",
+    ],
 )
 
 
@@ -127,19 +134,50 @@ def _compare_expected(
 
 
 def _case_to_response(case: MedicalCase) -> CaseResponse:
+    # JSON API: return raw strings; frontend escapes at render time (escHtml).
     return CaseResponse(
         id=case.id,
-        name=sanitize_html(case.name),
-        description=sanitize_html(case.description),
-        reference_source=sanitize_html(case.reference_source),
+        name=case.name,
+        description=case.description,
+        reference_source=case.reference_source,
         reference_url=case.reference_url,
         matrix=case.matrix_coefficients,
         vector=case.constants_vector,
         expected=case.expected_solution,
         variables=case.variables,
         units=case.units,
-        clinical_notes=sanitize_html(case.clinical_notes) if case.clinical_notes else None,
+        clinical_notes=case.clinical_notes,
     )
+
+
+def _validate_merged_case(case: MedicalCase, data: dict) -> None:
+    """Cross-field validation of a CaseUpdate patch merged onto the existing case."""
+    from .schemas import validate_system
+    from .security import validate_case_name
+
+    name = data.get("name", case.name)
+    if not validate_case_name(name):
+        raise HTTPException(status_code=422, detail=t("invalid_case_name"))
+    matrix = data.get("matrix", case.matrix_coefficients)
+    vector = data.get("vector", case.constants_vector)
+    expected = data.get("expected", case.expected_solution)
+    variables = data.get("variables", case.variables)
+    units = data.get("units", case.units)
+    try:
+        validate_system(matrix, vector)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    n = len(matrix)
+    for label, lst in (
+        ("expected", expected),
+        ("variables", variables),
+        ("units", units),
+    ):
+        if len(lst) != n:
+            raise HTTPException(status_code=422, detail=f"{label} debe tener longitud {n}")
+    for val in expected:
+        if not (-1e6 <= val <= 1e6):
+            raise HTTPException(status_code=422, detail="Valores fuera de rango [-1e6, 1e6]")
 
 
 def _run_and_record(
@@ -190,8 +228,16 @@ api = APIRouter()
 
 
 @api.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "timestamp": datetime.now(UTC).isoformat()}
+def health() -> dict:
+    from .database import check_schema
+
+    schema = check_schema()
+    return {
+        "status": "ok" if schema["schema_ok"] else "degraded",
+        "timestamp": datetime.now(UTC).isoformat(),
+        "schema_ok": schema["schema_ok"],
+        "missing": schema["missing"],
+    }
 
 
 @api.get("/cases", response_model=list[CaseResponse])
@@ -242,6 +288,7 @@ def update_case(case_id: int, body: CaseUpdate, db: Session = Depends(get_db)) -
         other = db.query(MedicalCase).filter_by(name=data["name"]).first()
         if other and other.id != case_id:
             raise HTTPException(status_code=409, detail=t("duplicate_case_name"))
+    _validate_merged_case(case, data)
     if "matrix" in data:
         case.matrix_coefficients = data.pop("matrix")
     if "vector" in data:
@@ -280,6 +327,7 @@ def delete_case(case_id: int, db: Session = Depends(get_db)) -> CaseResponse:
 @limiter.limit(settings.rate_limit)
 def calculate_case(
     request: Request,
+    response: Response,
     body: CaseCalculateRequest,
     lang: str = LangQuery,
     db: Session = Depends(get_db),
@@ -302,6 +350,7 @@ def calculate_case(
 @limiter.limit(settings.rate_limit)
 def calculate_custom(
     request: Request,
+    response: Response,
     body: MatrixInput,
     lang: str = LangQuery,
     db: Session = Depends(get_db),

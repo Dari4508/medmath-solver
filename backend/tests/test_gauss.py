@@ -19,12 +19,15 @@ def test_d10w_case():
 
 
 def test_3x3_electrolytes():
-    matrix = [[154.0, 0.0, 154.0], [0.0, 20.0, 40.0], [154.0, 20.0, 154.0]]
-    vector = [1500.0, 80.0, 1580.0]
+    matrix = [[0.154, 0.0, 0.0], [0.0, 0.2, 0.4], [0.154, 0.2, 0.0]]
+    vector = [77.0, 160.0, 117.0]
+    expected = [500.0, 200.0, 300.0]
     result = gaussian_elimination(matrix, vector)
     assert result.success
     ok, err = verify_solution(matrix, vector, result.solution)
-    assert ok and err < 0.01
+    assert ok and err < 1e-6
+    for got, want in zip(result.solution, expected, strict=True):
+        assert abs(got - want) < 0.01
 
 
 def test_no_solution():

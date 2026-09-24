@@ -18,7 +18,8 @@ COPY requirements-dev.txt .
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY --chown=appuser:appuser . .
-RUN chown appuser:appuser /app
+RUN mkdir -p /app/data \
+    && chown -R appuser:appuser /app
 
 USER appuser
 

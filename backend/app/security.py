@@ -1,4 +1,5 @@
 import html
+import ipaddress
 import re
 
 from fastapi import Request
@@ -8,17 +9,35 @@ from slowapi.util import get_remote_address
 from .config import settings
 
 
+def _is_trusted_proxy(host: str | None) -> bool:
+    """Forwarding headers are only honored from loopback/private (docker) remotes."""
+    if not host or host == "testclient":
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return ip.is_loopback or ip.is_private
+
+
 def client_ip_key(request: Request) -> str:
+    remote = get_remote_address(request)
+    if not _is_trusted_proxy(remote):
+        return remote
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
         return real_ip.strip()
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[-1].strip()
-    return get_remote_address(request)
+    return remote
 
 
-limiter = Limiter(key_func=client_ip_key, storage_uri=settings.rate_limit_storage)
+limiter = Limiter(
+    key_func=client_ip_key,
+    storage_uri=settings.rate_limit_storage,
+    headers_enabled=True,
+)
 
 
 def sanitize_html(text: str) -> str:

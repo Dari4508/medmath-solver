@@ -7,6 +7,7 @@ class GaussStep:
     action: str
     matrix: list[list[float]]
     pivot_row: int | None = None
+    pivot_col: int | None = None
     target_row: int | None = None
     multiplier: float | None = None
     variable: int | None = None
@@ -67,6 +68,7 @@ def gaussian_elimination(
                         action="pivot",
                         matrix=[row[:] for row in aug],
                         pivot_row=r,
+                        pivot_col=col,
                         description=f"Intercambio fila {r} ↔ {pivot_row} (pivoteo parcial)",
                     )
                 )
@@ -87,6 +89,7 @@ def gaussian_elimination(
                         action="eliminate",
                         matrix=[row[:] for row in aug],
                         pivot_row=r,
+                        pivot_col=col,
                         target_row=row,
                         multiplier=factor,
                         description=f"F{row} ← F{row} - ({factor:.4f})×F{r}",  # noqa: RUF001

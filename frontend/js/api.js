@@ -24,11 +24,23 @@ function formatApiError(res, body) {
             return field && d.msg ? `${field}: ${d.msg}` : (d.msg || JSON.stringify(d));
         }).join(' · ');
     }
+    if (body && typeof body.error === 'string') return body.error;
     return `Error ${res.status}`;
+}
+
+function noteRateHeaders(res) {
+    if (typeof updateRateBadge !== 'function') return;
+    updateRateBadge(
+        res.status,
+        res.headers.get('X-RateLimit-Remaining'),
+        res.headers.get('X-RateLimit-Limit'),
+        res.headers.get('Retry-After')
+    );
 }
 
 async function request(path, options = {}) {
     const res = await fetch(`${API_BASE}${path}`, options);
+    noteRateHeaders(res);
     if (res.status === 429) {
         const retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10) || null;
         const body = await res.json().catch(() => null);

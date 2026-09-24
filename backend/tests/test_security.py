@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import ClassVar
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -89,6 +90,23 @@ async def test_rate_limit_enforced():
             json={"matrix": [[1, 0], [0, 1]], "vector": [1, 1]},
         )
         assert resp.status_code == 429
+        assert "Retry-After" in resp.headers
+        assert int(resp.headers["Retry-After"]) >= 1
+        assert resp.headers.get("X-RateLimit-Remaining") == "0"
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_headers_on_success():
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post(
+            "/api/calculate/custom",
+            json={"matrix": [[1, 0], [0, 1]], "vector": [1, 1]},
+        )
+        assert resp.status_code == 200
+        assert "X-RateLimit-Limit" in resp.headers
+        assert "X-RateLimit-Remaining" in resp.headers
+        remaining = int(resp.headers["X-RateLimit-Remaining"])
+        assert 0 <= remaining < 30
 
 
 @pytest.mark.asyncio
@@ -133,15 +151,72 @@ async def test_rate_limit_uses_last_forwarded_for_ip():
 
 
 @pytest.mark.asyncio
-async def test_xss_case_name_not_reflected():
+async def test_forwarding_headers_ignored_from_untrusted_remote():
+    from app.security import _is_trusted_proxy, client_ip_key
+
+    assert _is_trusted_proxy("127.0.0.1")
+    assert _is_trusted_proxy("::1")
+    assert _is_trusted_proxy("172.18.0.5")
+    assert _is_trusted_proxy("testclient")
+    assert _is_trusted_proxy(None)
+    assert not _is_trusted_proxy("8.8.8.8")
+    assert not _is_trusted_proxy("1.1.1.1")
+    assert not _is_trusted_proxy("not-an-ip")
+
+    class _Req:
+        client = type("C", (), {"host": "8.8.8.8"})()
+        headers: ClassVar[dict[str, str]] = {
+            "X-Real-IP": "9.9.9.9",
+            "X-Forwarded-For": "1.2.3.4, 5.6.7.8",
+        }
+
+    assert client_ip_key(_Req()) == "8.8.8.8"
+
+
+@pytest.mark.asyncio
+async def test_xss_description_returned_raw_name_blocked():
+    """JSON API returns raw strings; frontend escapes at render time."""
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post(
+            "/api/cases",
+            json={
+                "name": "Caso XSS Description",
+                "description": '<img src=x onerror="alert(1)"> payload',
+                "reference_source": "Manual",
+                "matrix": [[1.0, 0.0], [0.0, 1.0]],
+                "vector": [1.0, 2.0],
+                "expected": [1.0, 2.0],
+                "variables": ["x", "y"],
+                "units": ["mL", "mL"],
+            },
+        )
+        assert resp.status_code == 201
+        case_id = resp.json()["id"]
+
         resp = await ac.get("/api/cases")
         assert resp.status_code == 200
-        data = resp.json()
-        for case in data:
-            assert "<script>" not in case.get("name", "")
-            assert "onerror=" not in case.get("name", "")
-            assert "<script>" not in case.get("description", "")
+        created = next(c for c in resp.json() if c["id"] == case_id)
+        assert created["description"] == '<img src=x onerror="alert(1)"> payload'
+
+        await ac.delete(f"/api/cases/{case_id}")
+
+        resp = await ac.post(
+            "/api/cases",
+            json=dict(
+                {
+                    "name": "Caso XSS Name",
+                    "description": "x",
+                    "reference_source": "Manual",
+                    "matrix": [[1.0]],
+                    "vector": [1.0],
+                    "expected": [1.0],
+                    "variables": ["x"],
+                    "units": ["mL"],
+                },
+                name="<script>alert(1)</script>",
+            ),
+        )
+        assert resp.status_code == 422
 
 
 @pytest.mark.asyncio

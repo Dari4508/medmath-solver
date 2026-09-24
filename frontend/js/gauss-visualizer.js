@@ -1,7 +1,8 @@
 class GaussVisualizer {
-    constructor(canvasId) {
+    constructor(canvasId, uiContext = 'solver') {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
+        this.uiContext = uiContext;
         this.steps = [];
         this.currentStep = 0;
         this.isPlaying = false;
@@ -21,10 +22,17 @@ class GaussVisualizer {
     }
 
     loadSteps(steps) {
+        this.pause();
         this.steps = steps;
         this.currentStep = 0;
         this.prevMatrix = null;
-        this.drawStep(0);
+        if (steps.length) this.drawStep(0);
+    }
+
+    _notify() {
+        if (typeof updateStepUI === 'function') {
+            updateStepUI(this.currentStep, this.steps.length, this.uiContext);
+        }
     }
 
     drawStep(stepIndex) {
@@ -90,7 +98,7 @@ class GaussVisualizer {
 
                 // Value text
                 this.ctx.fillStyle = textColor;
-                this.ctx.font = '13px "JetBrains Mono", "Fira Code", monospace';
+                this.ctx.font = '13px "IBM Plex Mono", "JetBrains Mono", monospace';
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillText(this.formatVal(val), x + cellW / 2, y + cellH / 2);
@@ -99,7 +107,7 @@ class GaussVisualizer {
 
         // Row labels
         this.ctx.fillStyle = '#6b7280';
-        this.ctx.font = '11px sans-serif';
+        this.ctx.font = '11px "Sora", sans-serif';
         this.ctx.textAlign = 'right';
         for (let r = 0; r < n; r++) {
             this.ctx.fillText(`F${r}`, 14, r * (cellH + gap) + 10 + cellH / 2);
@@ -168,7 +176,7 @@ class GaussVisualizer {
         }
         this.currentStep++;
         this.drawStep(this.currentStep);
-        updateStepUI(this.currentStep, this.steps.length);
+        this._notify();
         this.animationTimer = setTimeout(() => this._tick(), this.speed);
     }
 
@@ -185,7 +193,7 @@ class GaussVisualizer {
         if (this.currentStep < this.steps.length - 1) {
             this.currentStep++;
             this.drawStep(this.currentStep);
-            updateStepUI(this.currentStep, this.steps.length);
+            this._notify();
         }
     }
 
@@ -194,7 +202,7 @@ class GaussVisualizer {
         this.currentStep = 0;
         this.prevMatrix = null;
         this.drawStep(0);
-        updateStepUI(0, this.steps.length);
+        this._notify();
     }
 
     goTo(index) {
@@ -204,7 +212,7 @@ class GaussVisualizer {
             ? this.steps[this.currentStep - 1].matrix.map(r => [...r])
             : null;
         this.drawStep(this.currentStep);
-        updateStepUI(this.currentStep, this.steps.length);
+        this._notify();
     }
 
     setSpeed(ms) {
