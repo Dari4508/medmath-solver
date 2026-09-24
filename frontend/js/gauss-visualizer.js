@@ -46,8 +46,11 @@ class GaussVisualizer {
         const cellW = 80;
         const cellH = 40;
         const gap = 2;
-        const totalW = cols * (cellW + gap) + 40;
-        const totalH = n * (cellH + gap) + 20;
+        const padX = 20;
+        const padTop = 10;
+        const padBottom = 24; // room for column labels (11px) + margin
+        const totalW = padX * 2 + cols * (cellW + gap) - gap;
+        const totalH = padTop + n * (cellH + gap) - gap + padBottom;
 
         this.canvas.width = totalW;
         this.canvas.height = totalH;
@@ -56,8 +59,8 @@ class GaussVisualizer {
 
         for (let r = 0; r < n; r++) {
             for (let c = 0; c < cols; c++) {
-                const x = c * (cellW + gap) + 20;
-                const y = r * (cellH + gap) + 10;
+                const x = c * (cellW + gap) + padX;
+                const y = r * (cellH + gap) + padTop;
                 const val = matrix[r][c];
 
                 // Background color
@@ -109,25 +112,29 @@ class GaussVisualizer {
         this.ctx.fillStyle = '#6b7280';
         this.ctx.font = '11px "Sora", sans-serif';
         this.ctx.textAlign = 'right';
+        this.ctx.textBaseline = 'middle';
         for (let r = 0; r < n; r++) {
-            this.ctx.fillText(`F${r}`, 14, r * (cellH + gap) + 10 + cellH / 2);
+            this.ctx.fillText(`F${r}`, padX - 6, r * (cellH + gap) + padTop + cellH / 2);
         }
 
-        // Variable labels below
+        // Variable labels below (top baseline + dedicated pad so glyphs never clip)
+        const labelY = padTop + n * (cellH + gap) - gap + 6;
         this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'top';
         this.ctx.fillStyle = '#9ca3af';
         for (let c = 0; c < n; c++) {
-            this.ctx.fillText(`x${c}`, c * (cellW + gap) + 20 + cellW / 2, totalH - 2);
+            this.ctx.fillText(`x${c}`, c * (cellW + gap) + padX + cellW / 2, labelY);
         }
-        this.ctx.fillText('b', (n) * (cellW + gap) + 20 + cellW / 2, totalH - 2);
+        this.ctx.fillText('b', n * (cellW + gap) + padX + cellW / 2, labelY);
+        this.ctx.textBaseline = 'middle';
 
         // Highlight changed cells
         if (this.prevMatrix && step.action === 'eliminate') {
             for (let r = 0; r < n; r++) {
                 for (let c = 0; c < cols; c++) {
                     if (Math.abs((matrix[r][c] || 0) - (this.prevMatrix[r]?.[c] || 0)) > 1e-12) {
-                        const x = c * (cellW + gap) + 20;
-                        const y2 = r * (cellH + gap) + 10;
+                        const x = c * (cellW + gap) + padX;
+                        const y2 = r * (cellH + gap) + padTop;
                         this.ctx.strokeStyle = '#22c55e';
                         this.ctx.lineWidth = 2;
                         this.ctx.strokeRect(x + 1, y2 + 1, cellW - 2, cellH - 2);

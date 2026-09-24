@@ -26,6 +26,8 @@ const DICT = {
         'free.example': 'Cargar ejemplo',
         'free.exampleHint': 'Carga un sistema de ejemplo según la dimensión seleccionada',
         'free.exampleLoaded': 'Ejemplo {n}×{n} cargado',
+        'free.clear': 'Limpiar',
+        'free.cleared': 'Formulario limpiado',
         'free.noResult': 'Los resultados y la animación de Gauss aparecerán aquí',
         'free.verified': 'Verificado',
         'free.unverified': 'No verificado',
@@ -97,6 +99,8 @@ const DICT = {
         'free.example': 'Load example',
         'free.exampleHint': 'Load an example system for the selected dimensions',
         'free.exampleLoaded': 'Example {n}×{n} loaded',
+        'free.clear': 'Clear',
+        'free.cleared': 'Form cleared',
         'free.noResult': 'Results and Gauss animation will appear here',
         'free.verified': 'Verified',
         'free.unverified': 'Not verified',
@@ -517,6 +521,23 @@ function resetFreeResultPanel() {
         badge.textContent = '';
         badge.className = 'text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
     }
+    const margin = document.getElementById('free-error-margin');
+    if (margin) margin.textContent = '';
+    const solPanel = document.getElementById('free-solution-panel');
+    if (solPanel) solPanel.classList.add('hidden');
+    const solValues = document.getElementById('free-solution-values');
+    if (solValues) solValues.innerHTML = '';
+    const ctxBox = document.getElementById('free-result-context');
+    if (ctxBox) {
+        ctxBox.classList.add('hidden');
+        const ctxText = document.getElementById('free-result-context-text');
+        if (ctxText) ctxText.textContent = '';
+    }
+    const slider = document.getElementById('free-step-slider');
+    if (slider) {
+        slider.max = '0';
+        slider.value = '0';
+    }
     const err = document.getElementById('free-error');
     if (err) {
         err.textContent = '';
@@ -541,6 +562,7 @@ function renderFreeContext() {
         ).join('');
     } else {
         panel.classList.add('hidden');
+        varList.innerHTML = '';
         editable?.classList.remove('hidden');
     }
 }
@@ -653,6 +675,31 @@ function loadExample() {
     }
     renderFreeContext();
     showToast(t('free.exampleLoaded', { n }), 'info');
+}
+
+function clearFreeMode() {
+    freeExampleIndex = -1;
+    freeContextData = null;
+    clearFreeError();
+
+    const ctxInput = document.getElementById('free-context-input');
+    if (ctxInput) ctxInput.value = '';
+    const varsInput = document.getElementById('free-vars-input');
+    if (varsInput) varsInput.value = '';
+
+    renderFreeContext();
+    buildFreeForm();
+
+    const form = document.getElementById('free-form');
+    if (form) {
+        form.querySelectorAll('input[type="number"]').forEach(inp => {
+            inp.value = '';
+            inp.setAttribute('aria-invalid', 'false');
+        });
+    }
+
+    resetFreeResultPanel();
+    showToast(t('free.cleared'), 'info');
 }
 
 async function solveFreeMode() {
@@ -785,8 +832,8 @@ function renderHistory(entries) {
     const list = document.getElementById('history-list');
     const controls = `
         <div class="flex gap-2 mb-4">
-            <button onclick="exportHistory()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs transition" data-i18n="history.export">Exportar CSV</button>
-            <button onclick="clearHistory()" class="bg-red-900/60 hover:bg-red-800 text-red-200 px-3 py-1.5 rounded-lg text-xs transition" data-i18n="history.clear">Limpiar historial</button>
+            <button onclick="exportHistory()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs transition" data-i18n="history.export">${t('history.export')}</button>
+            <button onclick="clearHistory()" class="bg-red-900/60 hover:bg-red-800 text-red-200 px-3 py-1.5 rounded-lg text-xs transition" data-i18n="history.clear">${t('history.clear')}</button>
         </div>`;
     if (entries.length === 0) {
         list.innerHTML = controls + `<p class="text-gray-500 text-sm text-center py-8">${t('history.empty')}</p>`;

@@ -169,6 +169,7 @@ input[type="range"]:focus-visible {
 .nav-btn,
 .ctrl-btn,
 #free-example-btn,
+#free-clear-btn,
 #free-solve-btn,
 #lang-select,
 #free-size {
@@ -238,12 +239,15 @@ button[type="submit"] {
 }
 
 #free-example-btn,
+#free-clear-btn,
 .back-btn {
     transition: background var(--duration-fast) var(--ease-out),
                 border-color var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out),
                 transform var(--duration-fast) var(--ease-out);
 }
 #free-example-btn:active,
+#free-clear-btn:active,
 .back-btn:active {
     transform: scale(0.97);
 }
