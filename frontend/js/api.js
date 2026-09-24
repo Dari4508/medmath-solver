@@ -1,4 +1,12 @@
-const API_BASE = window.location.origin + '/api';
+// Absolute backend origin in production (Vercel static → Render).
+// "" = same-origin relative paths (local nginx / serve.py proxy).
+const RENDER_API_URL = 'https://medmath-solver-api.onrender.com';
+const API_BASE_URL = (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === ''
+) ? '' : RENDER_API_URL;
+const API_BASE = `${API_BASE_URL}/api`;
 
 class RateLimitError extends Error {
     constructor(retryAfter, message) {
@@ -78,5 +86,5 @@ const api = {
 };
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { api, RateLimitError, formatApiError, request };
+    module.exports = { api, RateLimitError, formatApiError, request, API_BASE_URL, API_BASE };
 }

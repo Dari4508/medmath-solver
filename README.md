@@ -158,10 +158,19 @@ Copy `backend/.env.example` to `backend/.env` and adjust. All values have safe d
 
 Backend: Render (or Railway) — connect the repo, set the
 Environment Variables above, especially `SECRET_KEY` and
-`CORS_ORIGINS` with the deployed frontend domain.
+`CORS_ORIGINS` with the deployed frontend domain(s), e.g.:
+
+```text
+http://localhost:3000,http://127.0.0.1:3000,https://<your-project>.vercel.app
+```
+
+Replace `<your-project>.vercel.app` with your real Vercel URL once
+the frontend is deployed (add a custom domain the same way).
 
 Frontend: Vercel (or Netlify) — deploy the `frontend/` directory
-as a static site, pointing API calls to the deployed backend URL.
+as a static site. `js/api.js` auto-detects non-localhost hosts
+(including `*.vercel.app`) and calls the Render API at
+`RENDER_API_URL` (no nginx proxy required).
 
 Local smoke test before deploying:
 
