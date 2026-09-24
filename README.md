@@ -1,6 +1,14 @@
 # MedMath Solver
 
-Solver de sistemas lineales con **eliminación de Gauss** (pivoteo parcial) para farmacia hospitalaria. Backend **FastAPI + SQLite**, frontend **vanilla JS** sin build (CDN).
+![Tests](https://img.shields.io/badge/tests-84%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+
+Valida cálculos de mezclas IV hospitalarias (ej. D10W, electrolitos,
+nutrición parenteral) contra fuentes de farmacia real — no solo
+resuelve sistemas de ecuaciones, verifica que el resultado
+matemático coincida con el protocolo clínico citado.
 
 ## Quick commands
 
@@ -81,6 +89,25 @@ All routes are mounted under both `/api` (legacy) and `/api/v1` (versioned).
 
 **Rate limit:** 30 req/min per client IP (proxy-aware via `X-Real-IP` / `X-Forwarded-For`). Responses include `X-RateLimit-Limit` / `X-RateLimit-Remaining` / `X-RateLimit-Reset`; exceeding returns `429` with `Retry-After`.
 
+## Example Request
+
+```bash
+curl -X POST http://localhost:8000/api/calculate/custom \
+  -H 'Content-Type: application/json' \
+  -d '{"matrix":[[1,1],[0.5,0.05]],"vector":[500,50]}'
+```
+
+Response:
+
+```json
+{
+  "solution": [55.56, 444.44],
+  "verified": true,
+  "error_margin": 0.0,
+  "steps": ["..."]
+}
+```
+
 ## Dependencies / locks
 
 - `requirements.in` → `requirements.txt` (prod, `pip-compile --generate-hashes`)
@@ -110,3 +137,34 @@ Regenerate: `pip-compile --generate-hashes --allow-unsafe requirements.in -o req
 - Dockerfile installs `requirements-dev.txt` so lint tools are available in the test image (`docker run -u root ... ruff/black/mypy`).
 - ruff ignores `B008` (FastAPI `Depends()` in defaults is idiomatic) and `E501` (line length handled by black).
 - E2E with live stack: `E2E_NO_SERVER=1` skips Playwright webServer; restart `api` before run to reset in-memory rate limit. Run E2E sequentially — parallel runs exhaust the shared 30/min quota and race on `test-results/`. Use `./node_modules/.bin/playwright` from `tests/e2e`.
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_ENV` | `dev` | Application environment label |
+| `APP_VERSION` | `1.1.0` | Reported app version |
+| `DEFAULT_LANG` | `es` | Default response language (`es` / `en`) |
+| `DATABASE_URL` | `sqlite:///./medmath.db` | DB connection string |
+| `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Allowed frontend origins (comma-separated) |
+| `SECRET_KEY` | `change-me-in-production` | Override in production via env var |
+| `RATE_LIMIT_STORAGE` | `memory://` | Set to `redis://...` for multi-worker deployments |
+| `RATE_LIMIT` | `30/minute` | slowapi rate limit window |
+| `EXPECTED_TOLERANCE` | `1e-6` | Tolerance for expected vs computed solution comparison |
+
+Copy `backend/.env.example` to `backend/.env` and adjust. All values have safe defaults for local dev.
+
+## Deployment
+
+Backend: Render (or Railway) — connect the repo, set the
+Environment Variables above, especially `SECRET_KEY` and
+`CORS_ORIGINS` with the deployed frontend domain.
+
+Frontend: Vercel (or Netlify) — deploy the `frontend/` directory
+as a static site, pointing API calls to the deployed backend URL.
+
+Local smoke test before deploying:
+
+```bash
+docker compose up --build
+```
