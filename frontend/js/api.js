@@ -1,6 +1,6 @@
 // Absolute backend origin in production (Vercel static → Render).
 // "" = same-origin relative paths (local nginx / serve.py proxy).
-const RENDER_API_URL = 'https://medmath-solver-api.onrender.com';
+const RENDER_API_URL = 'https://medmath-solver.onrender.com';
 const API_BASE_URL = (
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1' ||
