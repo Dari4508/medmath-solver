@@ -649,3 +649,28 @@ button[type="submit"] {
         scroll-behavior: auto !important;
     }
 }
+
+/* Mobile: lighter rendering (scroll perf) */
+@media (max-width: 767px) {
+    body::before {
+        display: none !important;
+        animation: none !important;
+    }
+    .site-header {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        background: rgba(3, 7, 18, 0.96) !important;
+    }
+    /* Reduce hover transforms and heavy shadows on mobile */
+    .cases-grid > [role="button"]:hover,
+    .case-card:hover {
+        transform: none !important;
+        box-shadow: var(--shadow-card) !important;
+    }
+    .home-cta-primary:hover {
+        box-shadow: none !important;
+    }
+    /* Ensure text wraps and doesn't overflow */
+    .site-header .brand-mark { min-width: 0; }
+    .tagline { white-space: normal; font-size: 0.65rem; line-height: 1.3; }
+}

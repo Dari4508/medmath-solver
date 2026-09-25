@@ -12,6 +12,7 @@ const DICT = {
         'nav.cases': 'Casos',
         'nav.free': 'Modo Libre',
         'nav.history': 'Historial',
+        'nav.menu': 'Menú',
         'tagline': 'Eliminación de Gauss · Farmacia Hospitalaria',
         'a11y.skip': 'Saltar al contenido principal',
         'home.title': 'MedMath Solver',
@@ -103,6 +104,7 @@ const DICT = {
         'nav.cases': 'Cases',
         'nav.free': 'Free Mode',
         'nav.history': 'History',
+        'nav.menu': 'Menu',
         'tagline': 'Gaussian Elimination · Hospital Pharmacy',
         'a11y.skip': 'Skip to main content',
         'home.title': 'MedMath Solver',
@@ -288,9 +290,27 @@ function showView(view) {
     document.getElementById(`nav-${view}`)?.classList.add('active');
     currentView = view;
 
+    closeMobileMenu();
+
     if (view === 'history') loadHistory();
     if (view === 'free') buildFreeForm();
 }
+
+function closeMobileMenu() {
+    document.getElementById('site-header')?.classList.remove('menu-open');
+    const t = document.getElementById('menu-toggle');
+    if (t) t.setAttribute('aria-expanded', 'false');
+}
+
+document.addEventListener('click', (e) => {
+    const header = document.getElementById('site-header');
+    if (!header?.classList.contains('menu-open')) return;
+    if (!header.contains(e.target)) closeMobileMenu();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMobileMenu();
+});
 
 // --- Cases ---
 let casesCache = [];

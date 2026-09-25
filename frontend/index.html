@@ -41,29 +41,34 @@
     <a href="#main-content" class="skip-link" data-i18n="a11y.skip">Saltar al contenido principal</a>
 
     <!-- Header -->
-    <header class="site-header sticky top-0 z-50">
+    <header class="site-header sticky top-0 z-50" id="site-header">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-med-500 to-gauss-500 flex items-center justify-center font-bold text-lg shadow-lg shadow-med-500/20" aria-hidden="true">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 shrink-0 rounded-lg bg-gradient-to-br from-med-500 to-gauss-500 flex items-center justify-center font-bold text-lg shadow-lg shadow-med-500/20" aria-hidden="true">
                     G
                 </div>
-                <div class="brand-mark">
+                <div class="brand-mark min-w-0">
                     <h1 class="font-bold leading-tight" id="app-title">MedMath Solver</h1>
                     <p class="tagline text-xs text-gray-400" data-i18n="tagline">Eliminación de Gauss · Farmacia Hospitalaria</p>
                 </div>
             </div>
-            <nav class="flex gap-2 items-center flex-wrap justify-end" aria-label="Main">
+            <div class="flex items-center gap-2 shrink-0">
                 <span id="rate-badge" class="hidden text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700 tabular-nums" role="status" aria-live="polite" aria-label="Rate limit"></span>
-                <button id="nav-home" onclick="showView('home')" class="nav-btn active" data-i18n="nav.home">Inicio</button>
-                <button id="nav-cases" onclick="showView('cases')" class="nav-btn" data-i18n="nav.cases">Casos</button>
-                <button id="nav-free" onclick="showView('free')" class="nav-btn" data-i18n="nav.free">Modo Libre</button>
-                <button id="nav-history" onclick="showView('history')" class="nav-btn" data-i18n="nav.history">Historial</button>
-                <label class="sr-only" for="lang-select">Language</label>
-                <select id="lang-select" onchange="setLang(this.value)" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs" title="Idioma / Language">
-                    <option value="es">ES</option>
-                    <option value="en">EN</option>
-                </select>
-            </nav>
+                <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav" data-i18n-title="nav.menu" title="Menú" aria-label="Menú">
+                    <span aria-hidden="true">☰</span>
+                </button>
+                <nav id="primary-nav" class="site-nav" aria-label="Main">
+                    <button id="nav-home" onclick="showView('home')" class="nav-btn active" data-i18n="nav.home">Inicio</button>
+                    <button id="nav-cases" onclick="showView('cases')" class="nav-btn" data-i18n="nav.cases">Casos</button>
+                    <button id="nav-free" onclick="showView('free')" class="nav-btn" data-i18n="nav.free">Modo Libre</button>
+                    <button id="nav-history" onclick="showView('history')" class="nav-btn" data-i18n="nav.history">Historial</button>
+                    <label class="sr-only" for="lang-select">Language</label>
+                    <select id="lang-select" onchange="setLang(this.value)" class="lang-select bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs" title="Idioma / Language">
+                        <option value="es">ES</option>
+                        <option value="en">EN</option>
+                    </select>
+                </nav>
+            </div>
         </div>
     </header>
 
