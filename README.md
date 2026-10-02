@@ -58,7 +58,7 @@ E2E_NO_SERVER=1 E2E_BASE_URL=http://127.0.0.1:3000 npm test
 - **`backend/app/models.py`** — SQLAlchemy 2.0 typed models (`Mapped` / `mapped_column`).
 - **`backend/alembic/`** — migrations (`0001_initial`, `0002_*`).
 - **`backend/locustfile.py`** — load test scenarios for the API.
-- **`frontend/`** — zero build step. All libs via CDN (Tailwind, Chart.js, GSAP). `js/app.js` is the entrypoint (i18n es/en, free mode 2-col, rate-limit badge). Fonts: Sora + IBM Plex Mono. Design: bento cases grid, glass header, ambient mesh, skeletons, micro-interactions (`prefers-reduced-motion` safe).
+- **`frontend/`** — zero build step. All libs via CDN (Tailwind, Chart.js, GSAP). `js/app.js` is the entrypoint (orchestrator). Frontend split into modules: `i18n.js`, `state.js`, `api.js`, `api-errors.js`, `toast.js`, `utils.js`, `gauss-visualizer.js`, `step-ui.js`, `cases.js`, `free-mode.js`, `history.js`, `rate-badge.js` (i18n es/en, free mode 2-col, rate-limit badge). Fonts: Sora + IBM Plex Mono. Design: bento cases grid, glass header, ambient mesh, skeletons, micro-interactions (`prefers-reduced-motion` safe).
 - **`tests/e2e/`** — Playwright E2E, 7 tests (cases×5, D10W, ES↔EN, free inline + example, history, rate-limit badge last). Run sequentially; restart `api` first to reset the shared 30/min quota.
 - **`scripts/smoke_test.sh`** — compose smoke test.
 - **`.github/workflows/ci.yml`** — backend + frontend + e2e (compose + Playwright + smoke).

@@ -1,5 +1,6 @@
 class GaussVisualizer {
-    constructor(canvasId, uiContext = 'solver') {
+    constructor(canvasId, uiContext = 'solver', onStep = null) {
+        this.onStep = onStep;
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.uiContext = uiContext;
@@ -30,9 +31,7 @@ class GaussVisualizer {
     }
 
     _notify() {
-        if (typeof updateStepUI === 'function') {
-            updateStepUI(this.currentStep, this.steps.length, this.uiContext);
-        }
+        if (this.onStep) this.onStep(this.currentStep, this.steps.length, this.uiContext);
     }
 
     drawStep(stepIndex) {
@@ -226,3 +225,5 @@ class GaussVisualizer {
         this.speed = ms;
     }
 }
+
+export { GaussVisualizer };

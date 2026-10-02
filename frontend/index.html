@@ -22,8 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
     <link rel="stylesheet" href="assets/styles.css">
-    <script src="js/tailwind-config.js"></script>
-    <script type="application/ld+json">
+    <script src="js/tailwind-config.js"></script>    <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
@@ -43,7 +42,7 @@
     <!-- Header -->
     <header class="site-header sticky top-0 z-50" id="site-header">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 min-w-0">
+            <a href="#home" id="brand-link" class="brand-link flex items-center gap-3 min-w-0" onclick="showView('home'); return false;">
                 <div class="w-10 h-10 shrink-0 rounded-lg bg-gradient-to-br from-med-500 to-gauss-500 flex items-center justify-center font-bold text-lg shadow-lg shadow-med-500/20" aria-hidden="true">
                     G
                 </div>
@@ -51,7 +50,7 @@
                     <h1 class="font-bold leading-tight" id="app-title">MedMath Solver</h1>
                     <p class="tagline text-xs text-gray-400" data-i18n="tagline">Eliminación de Gauss · Farmacia Hospitalaria</p>
                 </div>
-            </div>
+            </a>
             <div class="flex items-center gap-2 shrink-0">
                 <span id="rate-badge" class="hidden text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700 tabular-nums" role="status" aria-live="polite" aria-label="Rate limit"></span>
                 <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav" data-i18n-title="nav.menu" title="Menú" aria-label="Menú">
@@ -323,8 +322,6 @@
     <!-- Toast -->
     <div id="toast" role="status" aria-live="polite" class="fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div>
 
-    <script src="js/api.js"></script>
-    <script src="js/gauss-visualizer.js"></script>
-    <script src="js/app.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
