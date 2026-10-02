@@ -262,7 +262,7 @@ Components follow a dark glass/technical aesthetic. All interactive elements mee
 - **Success animation:** `.anim-pop` class applied on verification success/failure emoji (`frontend/js/app.js` renders with `anim-pop` class on verification display).
 
 ### i18n Conventions (visual)
-- Spanish-first default (`lang="es"` in HTML, `frontend/index.html:2`); language selector in header (`frontend/index.html:65–69`, `frontend/js/app.js` sets document.lang via `setLang()` at `frontend/js/app.js:208–216`). All UI strings use `data-i18n` attributes with ES/EN parity in the `DICT` map (`frontend/js/app.js:9–194`), resolved through `t()` at `frontend/js/app.js:202–207` and applied by `applyI18n()` at `frontend/js/app.js:217–231`.
+- Spanish-first default (`lang="es"` in HTML, `frontend/index.html:2`); language selector in header (`frontend/index.html:65–69`, `frontend/js/app.js` sets document.lang via `setLang()` at `frontend/js/app.js:19–24`). All UI strings use `data-i18n` attributes with ES/EN parity in the `DICT` map (`frontend/js/i18n.js:1–188`), resolved through `t()` at `frontend/js/i18n.js:206–210` and applied by `applyI18n()` at `frontend/js/i18n.js:211–223`.
 - Clinical domain terms remain precise in both languages (units like mEq, mL preserved; Spanish clinical register is the source).
 
 ## Do's and Don'ts
