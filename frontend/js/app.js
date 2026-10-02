@@ -1,3 +1,7 @@
+import { api, RateLimitError, setRateBadgeUpdater } from './api.js';
+import { GaussVisualizer } from './gauss-visualizer.js';
+import { DICT, t, getLang, persistLang, applyI18n } from './i18n.js';
+
 let viz;
 let freeViz;
 let currentView = 'home';
@@ -6,227 +10,11 @@ let calculationResult = null;
 let freeResult = null;
 let freeCalc = null;
 
-const DICT = {
-    es: {
-        'nav.home': 'Inicio',
-        'nav.cases': 'Casos',
-        'nav.free': 'Modo Libre',
-        'nav.history': 'Historial',
-        'nav.menu': 'Menú',
-        'tagline': 'Eliminación de Gauss · Farmacia Hospitalaria',
-        'a11y.skip': 'Saltar al contenido principal',
-        'home.title': 'MedMath Solver',
-        'home.subtitle': 'Resuelve sistemas de ecuaciones lineales con eliminación de Gauss, aplicado a farmacia hospitalaria — cada cálculo se verifica contra una fuente clínica real.',
-        'home.ctaCases': 'Ver Casos Clínicos',
-        'home.ctaFree': 'Probar Modo Libre',
-        'home.whatTitle': 'Qué es',
-        'home.what1Title': 'Casos clínicos reales',
-        'home.what1Text': 'Mezclas IV, electrolitos y nutrición parenteral, verificados contra protocolos y guías publicadas.',
-        'home.what2Title': 'Modo Libre',
-        'home.what2Text': 'Arma tu propio sistema de ecuaciones (hasta 6×6) y resuélvelo paso a paso con animación.',
-        'home.what3Title': 'Verificación matemática',
-        'home.what3Text': 'Cada resultado se compara contra el valor esperado, con margen de error visible.',
-        'home.howTitle': 'Cómo usar Modo Libre',
-        'home.step1': 'Elige la dimensión de tu sistema (2×2 hasta 6×6).',
-        'home.step2': 'Carga un ejemplo o escribe tu propia matriz y vector — puedes documentar el contexto clínico (qué representa cada variable).',
-        'home.step3': 'Resuelve y revisa la animación paso a paso: pivoteo, eliminación, sustitución hacia atrás.',
-        'home.aboutTitle': 'Sobre el proyecto',
-        'home.aboutText': 'Desarrollado por Jeffrey Rodríguez, estudiante de Ingeniería de Sistemas (Corporación Universitaria Americana) como proyecto académico de álgebra lineal aplicada.',
-        'cases.title': 'Casos Clínicos Precargados',
-        'cases.source': 'Fuente',
-        'cases.vars': 'vars',
-        'cases.error': 'Error cargando casos: ',
-        'free.title': 'Modo Libre — Ingresa tu Sistema',
-        'free.dimensions': 'Dimensiones:',
-        'free.hint': 'Ingresa los coeficientes de la matriz A y el vector b:',
-        'free.solve': 'Resolver con Gauss',
-        'free.invalidCell': 'Valor inválido en fila {r}, columna {c}',
-        'free.invalidVec': 'Valor inválido en vector b, fila {r}',
-        'free.example': 'Cargar ejemplo',
-        'free.exampleHint': 'Carga un sistema de ejemplo según la dimensión seleccionada',
-        'free.exampleLoaded': 'Ejemplo {n}×{n} cargado',
-        'free.clear': 'Limpiar',
-        'free.cleared': 'Formulario limpiado',
-        'free.noResult': 'Los resultados y la animación de Gauss aparecerán aquí',
-        'free.verified': 'Verificado',
-        'free.unverified': 'No verificado',
-        'free.solution': 'Solución',
-        'history.title': 'Historial de Cálculos',
-        'history.empty': 'No hay cálculos registrados',
-        'history.case': 'Caso #{id}',
-        'history.free': 'Modo libre',
-        'history.verified': '✅ Verificado',
-        'history.unverified': '—',
-        'history.error': 'Error cargando historial',
-        'history.clear': 'Limpiar historial',
-        'history.export': 'Exportar CSV',
-        'history.delete': 'Eliminar',
-        'history.deleted': 'Entrada eliminada',
-        'history.cleared': 'Historial limpiado',
-        'history.confirmDelete': '¿Eliminar esta entrada del historial?',
-        'history.confirmClear': '¿Borrar todo el historial?',
-        'history.detailError': 'No se pudo cargar el detalle',
-        'history.detail': 'Ver detalle',
-        'history.steps': '{n} pasos',
-        'free.context.title': 'Contexto clínico',
-        'free.context.optional': 'Contexto clínico (opcional)',
-        'free.context.placeholder': 'Describe el objetivo: ej. Preparar 500mL de NaCl 0.45%...',
-        'free.context.varsPlaceholder': 'Variables separadas por coma: ml_NS_09, ml_agua',
-        'free.context.varsLabel': 'Nombres de variables',
-        'free.context.result': 'Contexto:',
-        'solver.play': 'Play',
-        'solver.pause': 'Pause',
-        'solver.step': 'Step',
-        'solver.reset': 'Reset',
-        'solver.stepDesc': 'Presiona Play o Step para iniciar la animación',
-        'solver.stepCounter': 'Paso {step} / {total}',
-        'solver.verified': 'Verificado',
-        'solver.unverified': 'No verificado',
-        'solver.verification': 'Verificación',
-        'solver.waiting': 'Esperando resultado...',
-        'solver.error': 'Error',
-        'solver.solution': 'Solución',
-        'solver.caseInfo': 'Info del Caso',
-        'solver.description': 'Descripción:',
-        'solver.clinicalNotes': 'Notas clínicas:',
-        'solver.expected': 'Esperado:',
-        'solver.back': '← Volver a casos',
-        'solver.freeMode': 'Modo Libre',
-        'solver.source': 'Fuente',
-        'error.generic': 'Error: ',
-        'rate.limit': 'Rate limit excedido — reintenta en {s}s',
-        'rate.limit.wait': 'Rate limit excedido — espera un momento',
-        'rate.badge': 'Cotas: {remaining}/{limit}',
-        'rate.cooldown': 'Rate limit — {s}s',
-    },
-    en: {
-        'nav.home': 'Home',
-        'nav.cases': 'Cases',
-        'nav.free': 'Free Mode',
-        'nav.history': 'History',
-        'nav.menu': 'Menu',
-        'tagline': 'Gaussian Elimination · Hospital Pharmacy',
-        'a11y.skip': 'Skip to main content',
-        'home.title': 'MedMath Solver',
-        'home.subtitle': 'Solve systems of linear equations with Gaussian elimination, applied to hospital pharmacy — every calculation is verified against a real clinical source.',
-        'home.ctaCases': 'View Clinical Cases',
-        'home.ctaFree': 'Try Free Mode',
-        'home.whatTitle': 'What it is',
-        'home.what1Title': 'Real clinical cases',
-        'home.what1Text': 'IV mixtures, electrolytes, and parenteral nutrition, verified against published protocols and guidelines.',
-        'home.what2Title': 'Free Mode',
-        'home.what2Text': 'Build your own system of equations (up to 6×6) and solve it step by step with animation.',
-        'home.what3Title': 'Mathematical verification',
-        'home.what3Text': 'Every result is compared against the expected value, with a visible error margin.',
-        'home.howTitle': 'How to use Free Mode',
-        'home.step1': 'Choose your system dimension (2×2 up to 6×6).',
-        'home.step2': 'Load an example or type your own matrix and vector — you can document the clinical context (what each variable represents).',
-        'home.step3': 'Solve and review the step-by-step animation: pivoting, elimination, back-substitution.',
-        'home.aboutTitle': 'About the project',
-        'home.aboutText': 'Developed by Jeffrey Rodríguez, Systems Engineering student (Corporación Universitaria Americana) as an academic project on applied linear algebra.',
-        'cases.title': 'Preloaded Clinical Cases',
-        'cases.source': 'Source',
-        'cases.vars': 'vars',
-        'cases.error': 'Error loading cases: ',
-        'free.title': 'Free Mode — Enter Your System',
-        'free.dimensions': 'Dimensions:',
-        'free.hint': 'Enter the coefficients of matrix A and vector b:',
-        'free.solve': 'Solve with Gauss',
-        'free.invalidCell': 'Invalid value at row {r}, column {c}',
-        'free.invalidVec': 'Invalid value in vector b, row {r}',
-        'free.example': 'Load example',
-        'free.exampleHint': 'Load an example system for the selected dimensions',
-        'free.exampleLoaded': 'Example {n}×{n} loaded',
-        'free.clear': 'Clear',
-        'free.cleared': 'Form cleared',
-        'free.noResult': 'Results and Gauss animation will appear here',
-        'free.verified': 'Verified',
-        'free.unverified': 'Not verified',
-        'free.solution': 'Solution',
-        'history.title': 'Calculation History',
-        'history.empty': 'No calculations recorded',
-        'history.case': 'Case #{id}',
-        'history.free': 'Free mode',
-        'history.verified': '✅ Verified',
-        'history.unverified': '—',
-        'history.error': 'Error loading history',
-        'history.clear': 'Clear history',
-        'history.export': 'Export CSV',
-        'history.delete': 'Delete',
-        'history.deleted': 'Entry deleted',
-        'history.cleared': 'History cleared',
-        'history.confirmDelete': 'Delete this history entry?',
-        'history.confirmClear': 'Delete the entire history?',
-        'history.detailError': 'Could not load details',
-        'history.detail': 'View details',
-        'history.steps': '{n} steps',
-        'free.context.title': 'Clinical context',
-        'free.context.optional': 'Clinical context (optional)',
-        'free.context.placeholder': 'Describe the goal: e.g. Prepare 500mL of 0.45% NaCl...',
-        'free.context.varsPlaceholder': 'Variable names separated by commas: ml_NS_09, ml_water',
-        'free.context.varsLabel': 'Variable names',
-        'free.context.result': 'Context:',
-        'solver.play': 'Play',
-        'solver.pause': 'Pause',
-        'solver.step': 'Step',
-        'solver.reset': 'Reset',
-        'solver.stepDesc': 'Press Play or Step to start the animation',
-        'solver.stepCounter': 'Step {step} / {total}',
-        'solver.verified': 'Verified',
-        'solver.unverified': 'Not verified',
-        'solver.verification': 'Verification',
-        'solver.waiting': 'Waiting for result...',
-        'solver.error': 'Error',
-        'solver.solution': 'Solution',
-        'solver.caseInfo': 'Case Info',
-        'solver.description': 'Description:',
-        'solver.clinicalNotes': 'Clinical notes:',
-        'solver.expected': 'Expected:',
-        'solver.back': '← Back to cases',
-        'solver.freeMode': 'Free Mode',
-        'solver.source': 'Source',
-        'error.generic': 'Error: ',
-        'rate.limit': 'Rate limit exceeded — retry in {s}s',
-        'rate.limit.wait': 'Rate limit exceeded — wait a moment',
-        'rate.badge': 'Quota: {remaining}/{limit}',
-        'rate.cooldown': 'Rate limit — {s}s',
-    },
-};
-
-const qsLang = new URLSearchParams(location.search).get('lang');
-let lang = qsLang && DICT[qsLang]
-    ? qsLang
-    : (localStorage.getItem('medmath-lang') || navigator.language || 'es').slice(0, 2);
-if (!DICT[lang]) lang = 'es';
-
-function t(key, vars) {
-    let s = (DICT[lang] && DICT[lang][key]) || DICT.es[key] || key;
-    if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, v);
-    return s;
-}
-
 function setLang(next) {
     if (!DICT[next]) return;
-    lang = next;
-    localStorage.setItem('medmath-lang', next);
-    document.documentElement.lang = next;
+    persistLang(next);
     applyI18n();
     refreshViewText();
-}
-
-function applyI18n() {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        el.textContent = t(el.getAttribute('data-i18n'));
-    });
-    document.querySelectorAll('[data-i18n-title]').forEach(el => {
-        el.title = t(el.getAttribute('data-i18n-title'));
-        el.setAttribute('aria-label', t(el.getAttribute('data-i18n-title')));
-    });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
-    });
-    const sel = document.getElementById('lang-select');
-    if (sel) sel.value = lang;
 }
 
 function refreshViewText() {
@@ -271,9 +59,10 @@ function handleApiError(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    viz = new GaussVisualizer('matrix-canvas');
-    freeViz = new GaussVisualizer('free-matrix-canvas', 'free');
-    document.documentElement.lang = lang;
+    setRateBadgeUpdater(updateRateBadge);
+    viz = new GaussVisualizer('matrix-canvas', 'solver', updateStepUI);
+    freeViz = new GaussVisualizer('free-matrix-canvas', 'free', updateStepUI);
+    document.documentElement.lang = getLang();
     applyI18n();
     renderFreeContext();
     loadCases();
@@ -311,9 +100,14 @@ function toggleMobileMenu() {
 
 // Opening is JS (user tapped the toggle); the collapsed state is pure CSS,
 // so nothing here decides whether the nav shows on first paint.
-document.getElementById('menu-toggle')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleMobileMenu();
+// Registered inside DOMContentLoaded: as a module this file evaluates after
+// parsing, but the element lookup above still has to happen once the DOM
+// exists, same as the init block.
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('menu-toggle')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMobileMenu();
+    });
 });
 
 // Leaving the mobile breakpoint clears the open state so the nav
@@ -647,7 +441,7 @@ function buildFreeForm() {
     const n = parseInt(document.getElementById('free-size').value);
     const form = document.getElementById('free-form');
     const vars = (freeContextData && freeContextData.variables) || null;
-    const key = `${n}|${lang}|${(vars || []).join(',')}`;
+    const key = `${n}|${getLang()}|${(vars || []).join(',')}`;
     if (form.dataset.key === key && form.querySelector('#fm-0-0')) return;
 
     const prev = {};
@@ -1029,3 +823,23 @@ function showToast(msg, type = 'info') {
     tEl.classList.remove('translate-y-20', 'opacity-0');
     setTimeout(() => { tEl.classList.add('translate-y-20', 'opacity-0'); }, 3000);
 }
+
+// Puente explicito para los handlers inline de index.html (onclick/onchange).
+// Los modulos ES no exponen nada en window, asi que esta es la superficie
+// exacta que el HTML necesita. Al migrar a data-action + delegation esta
+// tabla se puede borrar entera.
+Object.assign(window, {
+    showView, setLang, setSpeed, goToStep,
+    onFreeSizeChange, solveFreeMode, loadExample, clearFreeMode,
+    playAnimation, pauseAnimation, stepForward, resetAnimation,
+    freePlay, freePause, freeStepForward, freeReset,
+    freeSetSpeed, freeGoToStep,
+    selectCase, showHistoryDetail, deleteHistoryEntry,
+    exportHistory, clearHistory,
+});
+
+// El test de rate-limit (medmath.spec.ts) dispara api.calculateCustom()
+// desde page.evaluate(), es decir desde el contexto global de la pagina,
+// asi que el cliente necesita ser alcanzable desde ahi. Los modulos ES no
+// publican nada en window por defecto.
+window.api = api;

@@ -36,9 +36,17 @@ function formatApiError(res, body) {
     return `Error ${res.status}`;
 }
 
+let rateBadgeUpdater = null;
+
+// The badge lives in app.js; as ES modules nothing is global, so app.js
+// registers the callback explicitly at startup.
+function setRateBadgeUpdater(fn) {
+    rateBadgeUpdater = fn;
+}
+
 function noteRateHeaders(res) {
-    if (typeof updateRateBadge !== 'function') return;
-    updateRateBadge(
+    if (typeof rateBadgeUpdater !== 'function') return;
+    rateBadgeUpdater(
         res.status,
         res.headers.get('X-RateLimit-Remaining'),
         res.headers.get('X-RateLimit-Limit'),
@@ -88,3 +96,5 @@ const api = {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { api, RateLimitError, formatApiError, request, API_BASE_URL, API_BASE };
 }
+
+export { api, RateLimitError, formatApiError, request, setRateBadgeUpdater, API_BASE_URL, API_BASE };
