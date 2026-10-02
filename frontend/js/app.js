@@ -302,6 +302,26 @@ function closeMobileMenu() {
     if (t) t.setAttribute('aria-expanded', 'false');
 }
 
+function toggleMobileMenu() {
+    const header = document.getElementById('site-header');
+    if (!header) return;
+    const open = header.classList.toggle('menu-open');
+    document.getElementById('menu-toggle')?.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+// Opening is JS (user tapped the toggle); the collapsed state is pure CSS,
+// so nothing here decides whether the nav shows on first paint.
+document.getElementById('menu-toggle')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMobileMenu();
+});
+
+// Leaving the mobile breakpoint clears the open state so the nav
+// is inline (CSS) again without a stale dropdown.
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 767) closeMobileMenu();
+});
+
 document.addEventListener('click', (e) => {
     const header = document.getElementById('site-header');
     if (!header?.classList.contains('menu-open')) return;
