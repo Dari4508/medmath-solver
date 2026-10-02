@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Start stack
-        run: docker compose up -d --build
+        run: RATE_LIMIT=120/minute docker compose up -d --build
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

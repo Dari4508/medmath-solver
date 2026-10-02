@@ -7,6 +7,7 @@ services:
       - DATABASE_URL=sqlite:///./data/medmath.db
       - APP_ENV=prod
       - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - RATE_LIMIT=30/minute
     volumes:
       - api-data:/app/data
     healthcheck:
