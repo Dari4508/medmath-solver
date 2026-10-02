@@ -2,6 +2,7 @@ import { api, RateLimitError, setRateBadgeUpdater } from './api.js';
 import { GaussVisualizer } from './gauss-visualizer.js';
 import { DICT, t, getLang, persistLang, applyI18n } from './i18n.js';
 import { loadCases, rerenderCases } from './cases.js';
+import { loadHistory, renderHistory, showHistoryDetail, deleteHistoryEntry, clearHistory, exportHistory } from './history.js';
 import {
     buildFreeForm, renderFreeContext, onFreeSizeChange, solveFreeMode,
     loadExample, clearFreeMode, freePlay, freePause, freeStepForward,
@@ -10,6 +11,7 @@ import {
 import { escHtml } from './utils.js';
 import { state } from './state.js';
 import { updateStepUI } from './step-ui.js';
+import { updateRateBadge } from './rate-badge.js';
 import { showToast } from './toast.js';
 import { apiErrorMessage, handleApiError } from './api-errors.js';
 
@@ -197,128 +199,10 @@ function setSpeed() {
 }
 function goToStep(val) { state.viz.goTo(parseInt(val)); }
 
-// --- History ---
-async function loadHistory() {
-    try {
-        const history = await api.getHistory();
-        renderHistory(history);
-    } catch (e) {
-        handleApiError(e);
-    }
-}
-
-function renderHistory(entries) {
-    const list = document.getElementById('history-list');
-    const controls = `
-        <div class="flex gap-2 mb-4">
-            <button onclick="exportHistory()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs transition" data-i18n="history.export">${t('history.export')}</button>
-            <button onclick="clearHistory()" class="bg-red-900/60 hover:bg-red-800 text-red-200 px-3 py-1.5 rounded-lg text-xs transition" data-i18n="history.clear">${t('history.clear')}</button>
-        </div>`;
-    if (entries.length === 0) {
-        list.innerHTML = controls + `<p class="text-gray-500 text-sm text-center py-8">${t('history.empty')}</p>`;
-        return;
-    }
-    list.innerHTML = controls + entries.map(e => `
-        <div class="bg-gray-900 rounded-lg p-4 border border-gray-800 flex items-center justify-between" data-entry="${e.id}">
-            <div>
-                <div class="text-sm font-medium">${e.case_id ? t('history.case', { id: e.case_id }) : t('history.free')}</div>
-                <div class="text-xs text-gray-500">${e.input_matrix.length}×${e.input_matrix.length} · ${e.created_at?.split('T')[0] || ''}</div>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="text-xs ${e.verified ? 'text-med-400' : 'text-gray-500'}">${e.verified ? t('history.verified') : t('history.unverified')}</span>
-                <span class="text-xs text-gray-500">err: ${e.error_margin?.toFixed(10) || 'N/A'}</span>
-                <button class="ctrl-btn text-xs" title="${t('history.detail')}" aria-label="${t('history.detail')}" onclick="showHistoryDetail(${e.id})">ℹ</button>
-                <button class="ctrl-btn text-xs" title="${t('history.delete')}" aria-label="${t('history.delete')}" onclick="deleteHistoryEntry(${e.id})">🗑</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function showHistoryDetail(id) {
-    try {
-        const entry = await api.getHistoryEntry(id);
-        const stepsResp = await api.getHistorySteps(id);
-        const nSteps = Array.isArray(stepsResp.steps) ? stepsResp.steps.length : 0;
-        const label = entry.case_id ? t('history.case', { id: entry.case_id }) : t('history.free');
-        showToast(`${label} · ${t('history.steps', { n: nSteps })}`, 'info');
-    } catch (e) {
-        showToast(t('history.detailError'), 'error');
-    }
-}
-
-async function deleteHistoryEntry(id) {
-    if (!confirm(t('history.confirmDelete'))) return;
-    try {
-        await api.deleteHistoryEntry(id);
-        showToast(t('history.deleted'), 'info');
-        loadHistory();
-    } catch (e) {
-        handleApiError(e);
-    }
-}
-
-async function clearHistory() {
-    if (!confirm(t('history.confirmClear'))) return;
-    try {
-        await api.clearHistory();
-        showToast(t('history.cleared'), 'info');
-        loadHistory();
-    } catch (e) {
-        handleApiError(e);
-    }
-}
-
-function exportHistory() {
-    window.location.href = api.exportHistoryUrl();
-}
-
-// --- Utils ---
-let rateBadgeTimer = null;
-
-function updateRateBadge(status, remaining, limit, retryAfter) {
-    const badge = document.getElementById('rate-badge');
-    if (!badge) return;
-
-    if (rateBadgeTimer) {
-        clearInterval(rateBadgeTimer);
-        rateBadgeTimer = null;
-    }
-
-    if (status === 429) {
-        let secs = parseInt(retryAfter || '60', 10) || 60;
-        badge.classList.remove('hidden', 'ok', 'warn');
-        badge.classList.add('crit');
-        const tick = () => {
-            badge.textContent = t('rate.cooldown', { s: Math.max(secs, 0) });
-            if (secs <= 0) {
-                clearInterval(rateBadgeTimer);
-                rateBadgeTimer = null;
-                badge.classList.add('hidden');
-            }
-            secs -= 1;
-        };
-        tick();
-        rateBadgeTimer = setInterval(tick, 1000);
-        return;
-    }
-
-    if (remaining == null || limit == null) return;
-    const r = parseInt(remaining, 10);
-    const lim = parseInt(limit, 10);
-    if (isNaN(r) || isNaN(lim)) return;
-
-    badge.classList.remove('hidden', 'ok', 'warn', 'crit');
-    if (r <= 0) badge.classList.add('crit');
-    else if (r <= 5) badge.classList.add('warn');
-    else badge.classList.add('ok');
-    badge.textContent = t('rate.badge', { remaining: r, limit: lim });
-    badge.setAttribute('aria-label', t('rate.badge', { remaining: r, limit: lim }));
-}
-
+// --- History (movido a history.js) ---
+// --- rate badge (movido a rate-badge.js) ---
 // Puente explicito para los handlers inline de index.html (onclick/onchange).
-// Los modulos ES no exponen nada en window, asi que esta es la superficie
-// exacta que el HTML necesita. Al migrar a data-action + delegation esta
-// tabla se puede borrar entera.
+// Los modulos ES no exponen nada en window.
 Object.assign(window, {
     showView, setLang, setSpeed, goToStep,
     onFreeSizeChange, solveFreeMode, loadExample, clearFreeMode,
@@ -328,9 +212,3 @@ Object.assign(window, {
     selectCase, showHistoryDetail, deleteHistoryEntry,
     exportHistory, clearHistory,
 });
-
-// El test de rate-limit (medmath.spec.ts) dispara api.calculateCustom()
-// desde page.evaluate(), es decir desde el contexto global de la pagina,
-// asi que el cliente necesita ser alcanzable desde ahi. Los modulos ES no
-// publican nada en window por defecto.
-window.api = api;
