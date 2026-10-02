@@ -1,3 +1,9 @@
+import { api } from "./api.js";
+import { t } from "./i18n.js";
+import { showToast } from "./toast.js";
+import { handleApiError } from "./api-errors.js";
+import { state } from "./state.js";
+
 // --- History ---
 export async function loadHistory() {
     try {
